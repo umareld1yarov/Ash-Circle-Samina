@@ -1,0 +1,9 @@
+android/build/
+__pycache__/
+.DS_Store
+releases/
+*.keystore
+*.jks
+.env
+.env.*
+!.env.example
