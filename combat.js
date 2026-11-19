@@ -3,7 +3,10 @@
   'use strict';
   const STEP=1/60, LIMIT=6.1;
   const MOVES={punch:{wind:7,active:5,total:24,reach:1.12,low:.8,high:2.1,damage:8,stun:15},kick:{wind:13,active:6,total:36,reach:1.65,low:.45,high:1.65,damage:13,stun:21},special:{wind:21,active:9,total:53,reach:2.05,low:.3,high:2.35,damage:20,stun:28}};
-  const WEB={wind:16,active:1,total:43,reach:0,low:.7,high:1.9,damage:6,stun:8};
+  // Both fighters share the same special-move budget: 20 damage, 28-frame stun,
+  // and 210-frame cooldown. Web trades instant close range for a visible projectile
+  // that can be blocked or jumped over; its root lasts exactly as long as the stun.
+  const WEB={wind:16,active:1,total:43,reach:0,low:.7,high:1.9,damage:20,stun:28};
   function move(f,type=f.attack){return f.kind==='weaver'&&type==='special'?WEB:MOVES[type];}
   function fighter(name,x,face){return {name,kind:'melee',webbed:0,x,y:0,vy:0,jumpsUsed:0,flipRemaining:0,flipDir:1,face,hp:100,state:'idle',age:0,attack:null,hit:false,stun:0,cooldown:0,flash:0,walk:0};}
   class Match{
@@ -31,7 +34,7 @@
       }
       f.state=input.block&&f.y===0?'block':f.y>0?'jump':'idle';
       if(MOVES[action]&&f.state!=='block'&&(action!=='special'||f.cooldown===0)){
-        f.attack=action;f.state=action;f.age=0;f.hit=false;if(action==='special')f.cooldown=f.kind==='weaver'?210:150;return;
+        f.attack=action;f.state=action;f.age=0;f.hit=false;if(action==='special')f.cooldown=210;return;
       }
       if(f.state!=='block'&&!f.webbed){const dir=Number(!!input.right)-Number(!!input.left);f.x=Math.max(-LIMIT,Math.min(LIMIT,f.x+dir*3.4*STEP));if(dir){f.walk++;if(!f.y)f.state='walk';}}
     }
@@ -52,7 +55,7 @@
         const prev=bolt.x;bolt.x+=bolt.vx*STEP;bolt.life--;const target=this.fighters[1-bolt.owner],b=this.hurtbox(target);
         if(Math.max(prev,bolt.x)+.14>b.left&&Math.min(prev,bolt.x)-.14<b.right&&bolt.y+.16>b.bottom&&bolt.y-.16<b.top){
           const blocked=target.state==='block'&&target.face*bolt.vx<0;target.hp=Math.max(0,target.hp-(blocked?1:WEB.damage));target.flash=blocked?5:10;
-          if(!blocked){target.webbed=60;target.stun=WEB.stun;target.attack=null;target.state='hurt';target.age=0;}bolt.life=0;this.events.push(blocked?'block':'webhit');
+          if(!blocked){target.webbed=WEB.stun;target.stun=WEB.stun;target.attack=null;target.state='hurt';target.age=0;}bolt.life=0;this.events.push(blocked?'block':'webhit');
         }
         if(Math.abs(bolt.x)>7)bolt.life=0;
       }
