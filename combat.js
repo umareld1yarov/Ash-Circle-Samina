@@ -14,12 +14,14 @@
     random(){this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0;return this.seed/4294967296;}
     action(type){if(['jump','punch','kick','special'].includes(type)&&this.pending.length<4)this.pending.push(type);}
     ai(){const [p,a]=this.fighters,dist=Math.abs(p.x-a.x);this.aiAction=null;
-      if(this.tick%12!==0)return;
+      // Beginner-friendly opponent: same fighter stats, with slower decisions and
+      // fewer automatic counters so a new player has time to react and learn.
+      if(this.tick%24!==0)return;
       const danger=p.attack&&p.age<move(p).wind+move(p).active;
-      this.aiInput={left:dist>1.32&&p.x<a.x,right:dist>1.32&&p.x>a.x,block:dist<2.2&&danger&&this.random()<.7};
+      this.aiInput={left:dist>1.45&&p.x<a.x,right:dist>1.45&&p.x>a.x,block:dist<2.0&&danger&&this.random()<.28};
       const incoming=this.projectiles.some(b=>b.owner===0&&(a.x-b.x)*b.vx>0&&Math.abs(a.x-b.x)<2.4);
       if(!a.attack&&!a.stun&&!a.webbed&&a.jumpsUsed<2&&((a.y===0&&(incoming||(p.y>1&&dist<2.7)||(dist>1.8&&dist<4&&this.random()<.18)))||(a.y>.7&&a.vy<1&&a.jumpsUsed===1&&(incoming||p.y>.3||this.random()<.35)))){this.aiAction='jump';this.aiInput.block=false;}
-      else if(dist<1.8&&!this.aiInput.block&&(a.y===0||a.jumpsUsed===2||a.vy<-2))this.aiAction=this.random()<.58?'punch':this.random()<.65?'kick':'special';
+      else if(dist<1.65&&!this.aiInput.block&&(a.y===0||a.jumpsUsed===2||a.vy<-2)&&this.random()<.72)this.aiAction=this.random()<.68?'punch':this.random()<.85?'kick':'special';
     }
     advance(f,input,action,other){
       f.age++;f.webbed=Math.max(0,f.webbed-1);f.flash=Math.max(0,f.flash-1);f.cooldown=Math.max(0,f.cooldown-1);f.flipRemaining=Math.max(0,f.flipRemaining-1);
